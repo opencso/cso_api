@@ -1,0 +1,10 @@
+* api for the cso
+** notes
+*** I want to create a restful api for the cso
+*** cso.json.ie/dataset/time_start-time_end/Statistic/any/other/variables.csv|.json
+*** thats the kind of format I want 
+*** return a csv file or a json file
+** use the cso json-stat api as a data source
+*** I have a scraper already which I can run weekly and update
+*** any tables that have changed
+** postgres database as the backend
