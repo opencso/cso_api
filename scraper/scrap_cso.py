@@ -6,8 +6,11 @@ import codecs
 
 
 base = "http://www.cso.ie/StatbankServices/StatbankServices.svc/jsonservice/responseinstance/"
-pigs = "http://www.cso.ie/webserviceclient/datasets.aspx?sp=DB_AA&SPtext=Agriculture%20Livestock%20and%20Farm%20Numbers"
-first = "http://www.cso.ie/webserviceclient/DatasetListing.aspx"
+## this start page is a saved copy of
+## http://www.cso.ie/webserviceclient/DatasetListing.aspx
+## with all + menus open
+## I know thats a crap scraper but I did it last year in a hurry
+## and it works
 start = "start.html"
 
 
@@ -23,12 +26,6 @@ def base_page(start):
                 link.append(href)
             
     return link
-##save all the base pages 
-# with open(start, "r") as html:
-#    base_links = base_page(html)
-# with open("links", "w") as writer:
-#    for line in base_links:
-#        writer.write(line + "\n")
 
 
 
@@ -59,7 +56,7 @@ def get_cso_links(link_file):
                 linktojson.write(line + "\n")
 
 
-##get_cso_links("links")
+
 
 def download_files():
     files = []
@@ -77,7 +74,14 @@ def download_files():
                 writer.write(json_file)
 
 
+##save all the base pages 
+with open(start, "r") as html:
+    base_links = base_page(html)
+with open("links", "w") as writer:
+    for line in base_links:
+        writer.write(line + "\n")
 
+## make a list of all the json containing links on base pages
+get_cso_links("links")
+## download the files
 download_files()
-#base_links = base_page("start.html")
-#get_cso_links(base_links)
