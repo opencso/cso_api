@@ -19,17 +19,24 @@ source("cso_functions.R")
 
 all_sql <- ""
 table_list <- read.csv("table_names.csv")
-for(k in 1:nrow(table_list)){
+u_tablenames <- levels(table_list$table_name)
+table_list <- u_tablenames
+
+for(k in 1:length(table_list)){
+    ##my <- NA
+    try({
     file_path <- "/home/dave/cso/api/files/"
-    current_filename <-"CDD19"## table_list[k,]
+    current_filename <-  as.character(table_list[k]) ##"CDS19"
+    cat(current_filename, "\t");
     current_dataset <- paste0(file_path, current_filename)
-    tryCatch(my <- fromJSONstat(current_dataset),warning=function(){ next},error=function(){ next})
-    cat(current_filename, "\n")
-    my_codes <-fromJSONstat(current_dataset, naming="id")
-    
+    my <- fromJSONstat(current_dataset)
+ 
+    my <- fromJSONstat(current_dataset);
+    my_codes <-fromJSONstat(current_dataset, naming="id");
     ## grab a copy of the json file to pull out metadata
     just_json <- fromJSON(current_dataset)
     
+        
     ## a list of the headdings in the dataset 
     set_ids <- just_json$dataset$dimension$id
     set_ids <- gsub(" ", ".", set_ids)
@@ -40,16 +47,26 @@ for(k in 1:nrow(table_list)){
     
     ## the metric id always Statistic
     metric_id <- just_json$dataset$dimension$role$metric
+    ## get the index of the time ID
+    time_index <- 0
+    for(i in 1:length(set_ids)){
+        ##cat(set_ids[i], " ", time_id, "\n")
+        if(set_ids[i] == time_id){
+            time_index <- i
+            break
+        }
+    }
 
     ##join the labels and the ids into one data.frame
     my <- clean.names(my)
     value_index <- ncol(my)
     my_codes <- clean.names(my_codes)
+    ## remove the Value and the time var as they are the same in both sets
     my_codes <- my_codes[-c(time_index, ncol(my_codes))]
     names(my_codes) <- paste0(names(my_codes), "_code")
     my <- cbind(my_codes, my)
     new_set_ids <- names(my)
-    ## get the index of the time ID
+    ## recalculate the time index BAD 
     time_index <- 0
     for(i in 1:length(new_set_ids)){
         ##cat(set_ids[i], " ", time_id, "\n")
@@ -71,7 +88,11 @@ for(k in 1:nrow(table_list)){
         my$Quarter <- sub("Q4", "1001", my$Quarter)
         my$Quarter <- ymd(my$Quarter) 
         
-    } else if(names(my)[time_index] == "Year"){
+    } else if(names(my)[time_index] == "Half.Year"){
+        my$Half.Year <- sub("H1", "0101", my$Half.Year)
+        my$Half.Year <- sub("H2", "0601", my$Half.Year)
+        
+     } else if(names(my)[time_index] == "Year"){
         my$Year <- ymd(paste(my$Year, "01", "01", sep="-"))
 
     } else if (names(my)[time_index] == "Census.Year"){
@@ -93,6 +114,7 @@ for(k in 1:nrow(table_list)){
     my$value <- as.numeric(my$value)
     
     write.table(my, file=paste0("/home/dave/cso/api/output/",current_filename, ".csv"), col.names=FALSE, sep=",")
+    cat("Wrote csv\t")
     ## create
     
     sql_string <-  paste0("create table ", current_filename, "( index int,\n")
@@ -123,8 +145,10 @@ for(k in 1:nrow(table_list)){
     }
     sql_string <- paste0(sql_string, "\\copy ", current_filename, " FROM '/home/dave/cso/api/output/", current_filename,".csv' DELIMITER ',' CSV NULL 'NA' ;\n\n")
     all_sql <- paste0(all_sql, sql_string)
-    
-    
-##}
+        cat("wrote sql\n")
+        })
+
+       
+}
 
 cat(all_sql, file="all_sql.sql")    
